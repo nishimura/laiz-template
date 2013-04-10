@@ -205,17 +205,10 @@ class Parser extends Template
         $ret = '<?php echo ' .  $val . '; ?>';
         return array($ret, $len);
     }
-    protected function compile($tmplFile, $cacheFile)
+    protected function compileInternal($tmplFile, $cacheFile)
     {
-        if (file_exists($cacheFile) && filemtime($tmplFile) <= filemtime($cacheFile)){
-            return;
-        }
-
-        if (!file_exists($tmplFile))
-            throw new \RuntimeException("$tmplFile not found.");
-
         $tmpl = file_get_contents($tmplFile);
         $tmpl = $this->parse($tmpl);
-        $this->file_force_contents($cacheFile, $tmpl);
+        return $tmpl;
     }
 }

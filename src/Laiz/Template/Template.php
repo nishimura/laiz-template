@@ -49,19 +49,45 @@ class Template
         $tmplFile = $this->templateDir . '/' . $file;
         $cacheFile = $this->cacheDir . '/' . $file;
 
-        $this->compile($tmplFile, $cacheFile);
+        if (!$this->compile($tmplFile, $cacheFile))
+            return;
 
         $this->showCache($cacheFile, $vars);
+    }
+
+    protected function show404()
+    {
+        header($_SERVER['SERVER_PROTOCOL']. " 404 Not Found");
+
+        echo <<<END
+            <!DOCTYPE HTML PUBLIC "-//IETF//DTD HTML 2.0//EN">
+            <html><head>
+            <title>404 Not Found</title>
+            </head><body>
+            <h1>Not Found</h1>
+            <p>The requested URL was not found on this server.</p>
+            <hr>
+            <address>laiz-template</address>
+END;
     }
     protected function compile($tmplFile, $cacheFile)
     {
         if (file_exists($cacheFile) && filemtime($tmplFile) <= filemtime($cacheFile)){
-            return;
+            return true;
         }
 
-        if (!file_exists($tmplFile))
-            throw new \RuntimeException("$tmplFile not found.");
+        if (!file_exists($tmplFile)){
+            $this->show404();
+            return false;
+        }
 
+        $tmpl = $this->compileInternal($tmplFile, $cacheFile);
+
+        $this->file_force_contents($cacheFile, $tmpl);
+        return true;
+    }
+    protected function compileInternal($tmplFile, $cacheFile)
+    {
         $tmpl = file_get_contents($tmplFile);
 
         // include feature
@@ -81,7 +107,7 @@ class Template
         $tmpl = preg_replace('/\{([[:alnum:]_>-]*):b\}/', '<?php echo nl2br(htmlspecialchars($$1)); ?>', $tmpl);
         $tmpl = preg_replace('/\{([[:alnum:]_>-]*)\}/', '<?php echo htmlspecialchars($$1); ?>', $tmpl);
 
-        $this->file_force_contents($cacheFile, $tmpl);
+        return $tmpl;
     }
 
     // http://php.net/function.file-put-contents.php#84180
