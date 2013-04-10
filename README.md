@@ -12,15 +12,15 @@ Add `cache` directory in project directory:
 
 Include ``Template.php`` or ``Parser.php`` file:
 
-   cat > index.php
-   <?php
-   require_once 'Laiz/Template/Parser.php';
-   $t = new Laiz\\Template\\Parser();
-   $vars = new StdClass();
-   $vars->foo = 'World!';
-   $t->show($vars);
+    cat > index.php
+    <?php
+    require_once 'Laiz/Template/Parser.php';
+    $t = new Laiz\\Template\\Parser();
+    $vars = new StdClass();
+    $vars->foo = 'World!';
+    $t->show($vars);
 
 Add template file of top page:
 
-   mkdir template
-   echo 'Hello {foo}' > template/index.html
+    mkdir template
+    echo 'Hello {foo}' > template/index.html
