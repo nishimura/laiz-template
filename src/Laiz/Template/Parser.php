@@ -1,8 +1,10 @@
 <?php
 
+namespace Laiz\Template;
+
 require_once 'Template.php';
 
-class Yokaze_Parser extends Yokaze_Template
+class Parser extends Template
 {
     private $tagOpened = false;
     private $attrOpend = false;
@@ -169,8 +171,8 @@ class Yokaze_Parser extends Yokaze_Template
             $file = $matches[1];
             $templateFile = $this->templateDir . "/$file";
             $cacheFile = $this->cacheDir . "/$file";
-            $ret = '<?php $__yokazeParser__ = new Yokaze_Parser();'
-                . '$__yokazeParser__->compile('
+            $ret = '<?php $__laizTemplateParser__ = new Laiz\Template\Parser();'
+                . '$__laizTemplateParser__->compile('
                 . "'$templateFile', '$cacheFile');"
                 . "include '$cacheFile'; ?>";
             return array($ret, $len);
@@ -209,8 +211,11 @@ class Yokaze_Parser extends Yokaze_Template
             return;
         }
 
+        if (!file_exists($tmplFile))
+            throw new \RuntimeException("$tmplFile not found.");
+
         $tmpl = file_get_contents($tmplFile);
         $tmpl = $this->parse($tmpl);
-        file_put_contents($cacheFile, $tmpl);
+        $this->file_force_contents($cacheFile, $tmpl);
     }
 }

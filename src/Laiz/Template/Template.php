@@ -1,18 +1,26 @@
 <?php
 
-class Yokaze_Template
+namespace Laiz\Template;
+
+class Template
 {
     protected $templateDir = 'template';
     protected $cacheDir = 'cache';
     private $ext = 'html';
     private $vars;
+    private $path;
+
     public function __construct($templateDir = null, $cacheDir = null)
     {
         if ($templateDir)
             $this->templateDir = $templateDir;
         if ($cacheDir)
             $this->cacheDir;
-        $this->vars = new StdClass();
+
+        if (!is_writeable($this->cacheDir))
+            throw new \RuntimeException("$cacheDir directory is not writeable.");
+
+        $this->vars = new \StdClass();
     }
     public function setExtension($ext)
     {
@@ -22,11 +30,22 @@ class Yokaze_Template
     {
         $this->vars = $vars;
     }
+    public function setPath($path)
+    {
+        $this->path = $path;
+        return $this;
+    }
+    public function getPath()
+    {
+        if ($this->path !== null)
+            return $this->path;
+        return basename($_SERVER['SCRIPT_FILENAME'], '.php');
+    }
     public function show($vars = null)
     {
         if ($vars === null)
             $vars = $this->vars;
-        $file = basename($_SERVER['SCRIPT_FILENAME'], '.php') . '.' . $this->ext;
+        $file = $this->getPath() . '.' . $this->ext;
         $tmplFile = $this->templateDir . '/' . $file;
         $cacheFile = $this->cacheDir . '/' . $file;
 
@@ -39,6 +58,9 @@ class Yokaze_Template
         if (file_exists($cacheFile) && filemtime($tmplFile) <= filemtime($cacheFile)){
             return;
         }
+
+        if (!file_exists($tmplFile))
+            throw new \RuntimeException("$tmplFile not found.");
 
         $tmpl = file_get_contents($tmplFile);
 
@@ -59,7 +81,19 @@ class Yokaze_Template
         $tmpl = preg_replace('/\{([[:alnum:]_>-]*):b\}/', '<?php echo nl2br(htmlspecialchars($$1)); ?>', $tmpl);
         $tmpl = preg_replace('/\{([[:alnum:]_>-]*)\}/', '<?php echo htmlspecialchars($$1); ?>', $tmpl);
 
-        file_put_contents($cacheFile, $tmpl);
+        $this->file_force_contents($cacheFile, $tmpl);
+    }
+
+    // http://php.net/function.file-put-contents.php#84180
+    protected function file_force_contents($path, $contents,
+                                           $flag = 0, $context = null)
+    {
+        $parts = explode('/', $path);
+        $file = array_pop($parts);
+        $dir = '.';
+        foreach($parts as $part)
+            if(!is_dir($dir .= "/$part")) mkdir($dir);
+        return file_put_contents("$dir/$file", $contents, $flag, $context);
     }
     private function showCache($__cacheFile__, $__vars__)
     {

@@ -1,0 +1,17 @@
+{
+  "name": "laiz/template",
+  "description": "Simple template engine",
+  "keywords": ["template"],
+  "homepage": "https://github.com/nishimura/laiz-template",
+  "license": "MIT",
+  "authors": [{
+    "name": "Satoshi Nishimura",
+    "email": "nishim314@gmail.com"
+  }],
+  "autoload": {
+    "psr-0": { "Laiz\\Template\\": "src/" }
+  },
+  "require": {
+    "php": ">=5.3.3"
+  }
+}
