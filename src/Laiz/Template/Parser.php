@@ -160,7 +160,7 @@ class Parser extends Template
     }
     private function parseVal($buf)
     {
-        if (!preg_match('/^{([[:alnum:]\.:_]+)}/', $buf, $matches))
+        if (!preg_match('|^{([[:alnum:]\.:/_]+)}|', $buf, $matches))
             return array($buf[0], 1);
 
         $name = $matches[1];
