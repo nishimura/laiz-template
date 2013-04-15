@@ -81,7 +81,7 @@ class Parser extends Template
                     $this->tagStack[count($this->tagStack)-1]['php'] = 'endif';
                 }
                 $v = str_replace('.', '->', $m[2]);
-                $append = "<?php if (\$$v): ?>";
+                $append = "<?php if (isset(\$$v) && \$$v): ?>";
                 $parsed = '';
                 $len = strlen($m[0]);
 
