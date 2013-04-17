@@ -8,6 +8,10 @@ class Template
     protected $cacheDir = 'cache';
     private $ext = 'html';
     private $vars;
+
+    /**
+     * @deprecated
+     */
     private $path;
     private $file;
 
@@ -31,11 +35,19 @@ class Template
     {
         $this->vars = $vars;
     }
+
+    /**
+     * @deprecated
+     */
     public function setPath($path)
     {
         $this->path = $path;
         return $this;
     }
+
+    /**
+     * @deprecated
+     */
     public function getPath()
     {
         if ($this->path !== null)
