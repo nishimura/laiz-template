@@ -96,13 +96,15 @@ END;
     }
     protected function compile($tmplFile, $cacheFile)
     {
-        if (file_exists($cacheFile) && filemtime($tmplFile) <= filemtime($cacheFile)){
-            return true;
-        }
-
         if (!file_exists($tmplFile)){
+            if (file_exists($cacheFile))
+                unlink($cacheFile);
             $this->show404();
             return false;
+        }
+
+        if (file_exists($cacheFile) && filemtime($tmplFile) <= filemtime($cacheFile)){
+            return true;
         }
 
         $tmpl = $this->compileInternal($tmplFile, $cacheFile);
