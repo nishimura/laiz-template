@@ -68,7 +68,7 @@ class ParserTest extends PHPUnit_Framework_TestCase
         $ret = $this->target->get($args);
 
         $matcher = array('id' => 'body',
-                         'children' => array('less_than' => 2));
+                         'children' => array('count' => 1));
         $this->assertTag($matcher, $ret);
         $matcher = array('id' => 'if2',
                          'content' => '2');
@@ -99,7 +99,7 @@ class ParserTest extends PHPUnit_Framework_TestCase
         $ret = $this->target->get($args);
 
         $matcher = array('id' => 'body',
-                         'children' => array('less_than' => 2));
+                         'children' => array('count' => 1));
         $this->assertTag($matcher, $ret);
         $matcher = array('id' => 'if2',
                          'content' => '2');
@@ -121,6 +121,50 @@ class ParserTest extends PHPUnit_Framework_TestCase
 
         $matcher = array('id' => 'loop0',
                          'content' => '0');
+        $this->assertTag($matcher, $ret);
+        $matcher = array('id' => 'loop1',
+                         'content' => '1');
+        $this->assertTag($matcher, $ret);
+    }
+    public function testCustomIfLoop()
+    {
+        $this->target->setFile('custom_if_loop.html');
+        $args = new stdClass();
+        $args->check2 = true;
+        $args->ITEMS = array();
+        for ($i = 0; $i < 2; $i++){
+            $row = new stdClass();
+            $row->id = $i;
+            $row->var1 = $i;
+            $args->ITEMS[] = $row;
+        }
+        $ret = $this->target->get($args);
+
+        $matcher = array('id' => 'body',
+                         'children' => array('count' => 2));
+        $this->assertTag($matcher, $ret);
+        $matcher = array('id' => 'loop20',
+                         'content' => '0');
+        $this->assertTag($matcher, $ret);
+        $matcher = array('id' => 'loop21',
+                         'content' => '1');
+        $this->assertTag($matcher, $ret);
+    }
+    public function testCustomLoopIf()
+    {
+        $this->target->setFile('custom_loop_if.html');
+        $args = new stdClass();
+        $args->ITEMS = array();
+        for ($i = 0; $i < 2; $i++){
+            $row = new stdClass();
+            $row->id = $i;
+            $row->var1 = $i;
+            $args->ITEMS[] = $row;
+        }
+        $ret = $this->target->get($args);
+
+        $matcher = array('id' => 'body',
+                         'children' => array('count' => 1));
         $this->assertTag($matcher, $ret);
         $matcher = array('id' => 'loop1',
                          'content' => '1');

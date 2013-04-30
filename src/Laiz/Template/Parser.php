@@ -74,13 +74,13 @@ class Parser extends Template
                 }
                 $parsed = '';
                 $len = strlen($m[0]);
-                $this->pushPhp('endforeach');
+                $this->pushPhp('endforeach;');
 
             }else if (!$append && preg_match($if, $sub, $m)){
                 if ($m[1]){
                     $this->pushPhp('else:');
                 }else{
-                    $this->pushPhp('endif');
+                    $this->pushPhp('endif;');
                 }
                 $v = str_replace('.', '->', $m[2]);
                 $append = "<?php if (isset(\$$v) && \$$v): ?>";
@@ -88,7 +88,7 @@ class Parser extends Template
                 $len = strlen($m[0]);
 
             }else if (!$append && preg_match('/^else:/', $sub, $m)){
-                $this->pushPhp('endif');
+                $this->pushPhp('endif;');
                 $parsed = '';
                 $len = strlen($m[0]);
 
@@ -108,7 +108,9 @@ class Parser extends Template
 
     private function pushPhp($phpcode)
     {
-        $this->tagStack[count($this->tagStack)-1]['php'] = $phpcode;
+        $this->tagStack[count($this->tagStack)-1]['php'] =
+            '<?php ' . $phpcode . "\n?>\n"
+            . $this->tagStack[count($this->tagStack)-1]['php'];
     }
 
     private function popTag($closeTag)
@@ -118,7 +120,7 @@ class Parser extends Template
             $tag = array_pop($this->tagStack);
             if ($tag['tag'] === $closeTag){
                 if ($tag['php'])
-                    return '<?php ' . $tag['php'] . ' ?>';
+                    return $tag['php'];
                 else
                     return '';
             }
@@ -142,9 +144,10 @@ class Parser extends Template
         $length = strlen($buf);
         $ret = '';
 
-        $loop = '/^loop="([[:alnum:].]+):([[:alnum:]_]+)(:[[:alnum:]]+)?"/';
-        $if = '/^if(el)?="([[:alnum:].]+)"/';
+        $loop = '/^laiz:loop="([[:alnum:].]+):([[:alnum:]_]+)(:[[:alnum:]]+)?"/';
+        $if = '/^laiz:if(el)?="([[:alnum:].]+)"/';
 
+        $php = '';
         for ($i = 0; $i < $length;){
             $char = $buf[$i];
 
@@ -154,26 +157,29 @@ class Parser extends Template
                 $ite = str_replace('.', '->', $m[1]);
                 if (isset($m[3])){
                     $v = ltrim($m[3], ':');
-                    $ret = "<?php foreach(\$$ite as \$$m[2]=>\$$v): ?> " . $ret;
+                    $php .= "<?php foreach(\$$ite as \$$m[2]=>\$$v): ?>";
                 }else{
-                    $ret = "<?php foreach(\$$ite as \$$m[2]): ?> " . $ret;
+                    $php .= "<?php foreach(\$$ite as \$$m[2]): ?>";
                 }
                 $len = strlen($m[0]);
-                $this->pushPhp('endforeach');
+                $this->pushPhp('endforeach;');
+                $parsed = '';
 
             }else if (preg_match($if, $sub, $m)){
                 if ($m[1]){
                     $this->pushPhp('else:');
                 }else{
-                    $this->pushPhp('endif');
+                    $this->pushPhp('endif;');
                 }
                 $v = str_replace('.', '->', $m[2]);
-                $ret = "<?php if (isset(\$$v) && \$$v): ?>" . $ret;
+                $php .= "<?php if (isset(\$$v) && \$$v): ?>";
                 $len = strlen($m[0]);
+                $parsed = '';
 
-            }else if (preg_match('/^else:/', $sub, $m)){
-                $this->pushPhp('endif');
+            }else if (preg_match('/^laiz:else/', $sub, $m)){
+                $this->pushPhp('endif;');
                 $len = strlen($m[0]);
+                $parsed = '';
 
             }else if ($char === '"' || $char === "'"){
                 list($parsed, $len, $append) =
@@ -206,7 +212,7 @@ class Parser extends Template
             $ret .= $parsed;
             $i += $len;
         }
-        return array($ret, $i);
+        return array($php . $ret, $i);
     }
     private function parseVal($buf)
     {
