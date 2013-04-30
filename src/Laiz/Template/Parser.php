@@ -55,6 +55,8 @@ class Parser extends Template
 
         $ret = '';
         $append = null;
+
+        // @deprecated loop and if statement in variable
         $loop = '/^loop:([[:alnum:].]+):([[:alnum:]_]+)(:[[:alnum:]]+)?/';
         $if = '/^if(el)?:([[:alnum:].]+)/';
         for ($i = 0; $i < $length;){
@@ -72,13 +74,13 @@ class Parser extends Template
                 }
                 $parsed = '';
                 $len = strlen($m[0]);
-                $this->tagStack[count($this->tagStack)-1]['php'] = 'endforeach';
+                $this->pushPhp('endforeach');
 
             }else if (!$append && preg_match($if, $sub, $m)){
                 if ($m[1]){
-                    $this->tagStack[count($this->tagStack)-1]['php'] = 'else:';
+                    $this->pushPhp('else:');
                 }else{
-                    $this->tagStack[count($this->tagStack)-1]['php'] = 'endif';
+                    $this->pushPhp('endif');
                 }
                 $v = str_replace('.', '->', $m[2]);
                 $append = "<?php if (isset(\$$v) && \$$v): ?>";
@@ -86,7 +88,7 @@ class Parser extends Template
                 $len = strlen($m[0]);
 
             }else if (!$append && preg_match('/^else:/', $sub, $m)){
-                $this->tagStack[count($this->tagStack)-1]['php'] = 'endif';
+                $this->pushPhp('endif');
                 $parsed = '';
                 $len = strlen($m[0]);
 
@@ -102,6 +104,11 @@ class Parser extends Template
         }
 
         return array($close . $ret . $close, $length + 2, $append);
+    }
+
+    private function pushPhp($phpcode)
+    {
+        $this->tagStack[count($this->tagStack)-1]['php'] = $phpcode;
     }
 
     private function popTag($closeTag)
@@ -134,9 +141,41 @@ class Parser extends Template
 
         $length = strlen($buf);
         $ret = '';
+
+        $loop = '/^loop="([[:alnum:].]+):([[:alnum:]_]+)(:[[:alnum:]]+)?"/';
+        $if = '/^if(el)?="([[:alnum:].]+)"/';
+
         for ($i = 0; $i < $length;){
             $char = $buf[$i];
-            if ($char === '"' || $char === "'"){
+
+            $sub = substr($buf, $i);
+            if (preg_match($loop, $sub, $m)){
+
+                $ite = str_replace('.', '->', $m[1]);
+                if (isset($m[3])){
+                    $v = ltrim($m[3], ':');
+                    $ret = "<?php foreach(\$$ite as \$$m[2]=>\$$v): ?> " . $ret;
+                }else{
+                    $ret = "<?php foreach(\$$ite as \$$m[2]): ?> " . $ret;
+                }
+                $len = strlen($m[0]);
+                $this->pushPhp('endforeach');
+
+            }else if (preg_match($if, $sub, $m)){
+                if ($m[1]){
+                    $this->pushPhp('else:');
+                }else{
+                    $this->pushPhp('endif');
+                }
+                $v = str_replace('.', '->', $m[2]);
+                $ret = "<?php if (isset(\$$v) && \$$v): ?>" . $ret;
+                $len = strlen($m[0]);
+
+            }else if (preg_match('/^else:/', $sub, $m)){
+                $this->pushPhp('endif');
+                $len = strlen($m[0]);
+
+            }else if ($char === '"' || $char === "'"){
                 list($parsed, $len, $append) =
                     $this->parseAttr($tagName, $char, substr($buf, $i));
                 if ($append)

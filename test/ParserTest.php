@@ -89,10 +89,24 @@ class ParserTest extends PHPUnit_Framework_TestCase
         $this->assertTag($matcher, $ret);
     }
 
-    public function _testCustomIf()
+    public function testCustomIf()
     {
+        $this->target->setFile('custom_if.html');
+        $args = new stdClass();
+        $args->var1 = false;
+        $args->var2 = true;
+
+        $ret = $this->target->get($args);
+
+        $matcher = array('id' => 'body',
+                         'children' => array('less_than' => 2));
+        $this->assertTag($matcher, $ret);
+        $matcher = array('id' => 'if2',
+                         'content' => '2');
+        $this->assertTag($matcher, $ret);
     }
-    public function _testCustomLoop()
+
+    public function testCustomLoop()
     {
         $this->target->setFile('custom_loop.html');
         $args = new stdClass();
