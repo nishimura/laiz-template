@@ -56,43 +56,10 @@ class Parser extends Template
         $ret = '';
         $append = null;
 
-        // @deprecated loop and if statement in variable
-        $loop = '/^loop:([[:alnum:].]+):([[:alnum:]_]+)(:[[:alnum:]]+)?/';
-        $if = '/^if(el)?:([[:alnum:].]+)/';
         for ($i = 0; $i < $length;){
             $char = $val[$i];
 
-            $sub = substr($val, $i);
-            if (!$append && preg_match($loop, $sub, $m)){
-
-                $ite = str_replace('.', '->', $m[1]);
-                if (isset($m[3])){
-                    $v = ltrim($m[3], ':');
-                    $append = "<?php foreach(\$$ite as \$$m[2]=>\$$v): ?> ";
-                }else{
-                    $append = "<?php foreach(\$$ite as \$$m[2]): ?> ";
-                }
-                $parsed = '';
-                $len = strlen($m[0]);
-                $this->pushPhp('endforeach;');
-
-            }else if (!$append && preg_match($if, $sub, $m)){
-                if ($m[1]){
-                    $this->pushPhp('else:');
-                }else{
-                    $this->pushPhp('endif;');
-                }
-                $v = str_replace('.', '->', $m[2]);
-                $append = "<?php if (isset(\$$v) && \$$v): ?>";
-                $parsed = '';
-                $len = strlen($m[0]);
-
-            }else if (!$append && preg_match('/^else:/', $sub, $m)){
-                $this->pushPhp('endif;');
-                $parsed = '';
-                $len = strlen($m[0]);
-
-            }else if ($char === '{'){
+            if ($char === '{'){
                 list($parsed, $len) = $this->parseVal(substr($val, $i));
 
             }else{
