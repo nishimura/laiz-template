@@ -1,3 +1,5 @@
 *~
 *.swp
 vendor/
+composer.lock
+cache/

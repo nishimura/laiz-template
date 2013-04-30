@@ -13,5 +13,9 @@
   },
   "require": {
     "php": ">=5.3.3"
+  },
+  "require-dev": {
+    "phpunit/phpunit": "3.7.*",
+    "piece/stagehand-testrunner": "3.5.0"
   }
 }
