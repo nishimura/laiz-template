@@ -9,10 +9,6 @@ class Template
     private $ext = 'html';
     private $vars;
 
-    /**
-     * @deprecated
-     */
-    private $path;
     private $file;
 
     public function __construct($templateDir = null, $cacheDir = null)
@@ -36,24 +32,6 @@ class Template
         $this->vars = $vars;
     }
 
-    /**
-     * @deprecated
-     */
-    public function setPath($path)
-    {
-        $this->path = $path;
-        return $this;
-    }
-
-    /**
-     * @deprecated
-     */
-    public function getPath()
-    {
-        if ($this->path !== null)
-            return $this->path;
-        return basename($_SERVER['SCRIPT_FILENAME'], '.php');
-    }
     public function setFile($file)
     {
         $this->file = $file;
@@ -63,7 +41,7 @@ class Template
     {
         if ($this->file !== null)
             return $this->file;
-        return $this->getPath() . '.' . $this->ext;
+        return basename($_SERVER['SCRIPT_FILENAME'], '.php') . '.' . $this->ext;
     }
     public function show($vars = null)
     {
