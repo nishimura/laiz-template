@@ -79,6 +79,13 @@ class Template
         $this->showCache($cacheFile, $vars);
     }
 
+    public function get($vars = null)
+    {
+        ob_start();
+        $this->show($vars);
+        return ob_get_clean();
+    }
+
     protected function show404()
     {
         header($_SERVER['SERVER_PROTOCOL']. " 404 Not Found");

@@ -56,7 +56,7 @@ class Parser extends Template
         $ret = '';
         $append = null;
         $loop = '/^loop:([[:alnum:].]+):([[:alnum:]_]+)(:[[:alnum:]]+)?/';
-        $if = '/^if(el)?:([[:alnum:].<>=\(\)$_!|&-]+)/';
+        $if = '/^if(el)?:([[:alnum:].]+)/';
         for ($i = 0; $i < $length;){
             $char = $val[$i];
 
@@ -144,6 +144,17 @@ class Parser extends Template
 
             }else if ($char === '{'){
                 list($parsed, $len) = $this->parseVal(substr($buf, $i));
+
+            }else if ($char === '/'){
+                $parsed = $char;
+                $len = 1;
+                if ($buf[$i + 1] === '>'){
+                    $ret .= $parsed . '>';
+                    $i += 2;
+                    $append = $this->popTag($tagName);
+                    $ret .= $append;
+                    break;
+                }
 
             }else if ($char === '>'){
                 $ret .= $char;
