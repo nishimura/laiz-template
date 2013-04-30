@@ -111,8 +111,8 @@ class Parser extends Template
         $length = strlen($buf);
         $ret = '';
 
-        $loop = '/^laiz:loop="([[:alnum:].]+):([[:alnum:]_]+)(:[[:alnum:]]+)?"/';
-        $if = '/^laiz:if(el)?="([[:alnum:].]+)"/';
+        $loop = '/^laiz:loop="([[:alnum:]._]+):([[:alnum:]_]+)(:[[:alnum:]_]+)?"/';
+        $if = '/^laiz:if(el)?="([[:alnum:]._]+)"/';
 
         $php = '';
         for ($i = 0; $i < $length;){
