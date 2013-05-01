@@ -115,6 +115,10 @@ class Parser extends Template
         $if = '/^laiz:if(el)?="([[:alnum:]._]+)"/';
 
         $php = '';
+        $form = array('parse' => false,
+                      'type' => '',
+                      'name' => '',
+                      'value' => '');
         for ($i = 0; $i < $length;){
             $char = $buf[$i];
 
@@ -148,6 +152,22 @@ class Parser extends Template
                 $len = strlen('laiz:else');
                 $parsed = '';
 
+            }else if ($this->startsWith($sub, 'laiz:form')){
+                $form['parse'] = true;
+                $len = strlen('laiz:form');
+                $parsed = '';
+
+            }else if (preg_match('/^(type=|name=|value=)/', $sub, $m)){
+                $ret .= $m[1];
+                $i += strlen($m[1]);
+                $char = $buf[$i];
+
+                list($parsed, $len, $append) =
+                    $this->parseAttr($tagName, $char, substr($buf, $i));
+                if ($append)
+                    $ret = $append . $ret;
+                $form[trim($m[1], '=')] = trim($parsed, $char);
+
             }else if ($char === '"' || $char === "'"){
                 list($parsed, $len, $append) =
                     $this->parseAttr($tagName, $char, substr($buf, $i));
@@ -174,8 +194,46 @@ class Parser extends Template
             $ret .= $parsed;
             $i += $len;
         }
+
+        if ($form['parse'])
+            $ret = $this->parseForm($ret, $form);
+
         return array($php . $ret, $i);
     }
+    private function parseForm($tagStr, $form)
+    {
+        if (substr($tagStr, -2) === '/>'){
+            $ret = substr($tagStr, 0, strlen($tagStr) - 2);
+            $close = '/>';
+        }else{
+            $ret = substr($tagStr, 0, strlen($tagStr) - 1);
+            $close = '>';
+        }
+        $value = '';
+
+        switch ($form['type']){
+        case 'checkbox':
+            if (!isset($form['value']))
+                break;
+            if ($this->startsWith($form['value'], '<?php'))
+                break;
+
+            $val = $this->nameToValue($form['name']);
+            $value = "<?php if(isset($val) && ($val === true || $val == '$form[value]')) echo ' checked=\"checked\"';?>";
+            break;
+
+        default:
+            break;
+        }
+        return $ret . $value . $close;
+    }
+    private function nameToValue($name)
+    {
+        $name = str_replace('[', '->', $name);
+        $name = str_replace(']', '', $name);
+        return '$' . $name;
+    }
+
     private function parseVal($buf)
     {
         if (!preg_match('|^{([[:alnum:]\.:/_]+)}|', $buf, $matches))

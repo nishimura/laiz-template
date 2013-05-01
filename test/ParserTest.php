@@ -151,4 +151,33 @@ class ParserTest extends PHPUnit_Framework_TestCase
                          'content' => '1');
         $this->assertTag($matcher, $ret);
     }
+
+    public function testFormCheckbox()
+    {
+        $this->target->setFile('form_checkbox.html');
+        $args = new stdClass();
+        $args->check = true;
+
+        $args->my = new stdClass();
+        $args->my->obj = new stdClass();
+        $args->my->obj->name = 'ON';
+        $ret = $this->target->get($args);
+
+        $matcher = array('id' => 'checkbox1',
+                         'attributes' => array('checked' => 'checked'));
+        $this->assertTag($matcher, $ret);
+        $this->assertTrue(strpos($ret, 'checked') !== false);
+
+
+        $matcher = array('id' => 'checkbox2',
+                         'attributes' => array('checked' => 'checked'));
+        $this->assertTag($matcher, $ret);
+        $this->assertTrue(strpos($ret, 'checked') !== false);
+
+        $args->check = 'false';
+        $args->my->obj->name = 'dummy';
+        $ret = $this->target->get($args);
+
+        $this->assertFalse(strpos($ret, 'checked') !== false);
+    }
 }
