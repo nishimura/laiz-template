@@ -71,6 +71,22 @@ class ParserTest extends PHPUnit_Framework_TestCase
         $this->assertTag($matcher, $ret);
     }
 
+    public function testCustomIfel()
+    {
+        $this->target->setFile('custom_ifel.html');
+        $args = new stdClass();
+        $args->var1 = false;
+
+        $ret = $this->target->get($args);
+
+        $matcher = array('id' => 'body',
+                         'children' => array('count' => 1));
+        $this->assertTag($matcher, $ret);
+        $matcher = array('id' => 'if2',
+                         'content' => '2');
+        $this->assertTag($matcher, $ret);
+    }
+
     public function testCustomLoop()
     {
         $this->target->setFile('custom_loop.html');

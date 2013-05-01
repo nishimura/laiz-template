@@ -143,9 +143,9 @@ class Parser extends Template
                 $len = strlen($m[0]);
                 $parsed = '';
 
-            }else if (preg_match('/^laiz:else/', $sub, $m)){
+            }else if ($this->startsWith($sub, 'laiz:else')){
                 $this->pushPhp('endif;');
-                $len = strlen($m[0]);
+                $len = strlen('laiz:else');
                 $parsed = '';
 
             }else if ($char === '"' || $char === "'"){
@@ -157,16 +157,11 @@ class Parser extends Template
             }else if ($char === '{'){
                 list($parsed, $len) = $this->parseVal(substr($buf, $i));
 
-            }else if ($char === '/'){
-                $parsed = $char;
-                $len = 1;
-                if ($buf[$i + 1] === '>'){
-                    $ret .= $parsed . '>';
-                    $i += 2;
-                    $append = $this->popTag($tagName);
-                    $ret .= $append;
-                    break;
-                }
+            }else if ($this->startsWith($sub, '/>')){
+                $ret .= '/>';
+                $i += 2;
+                $ret .= $this->popTag($tagName);
+                break;
 
             }else if ($char === '>'){
                 $ret .= $char;
@@ -233,5 +228,10 @@ class Parser extends Template
         $tmpl = file_get_contents($tmplFile);
         $tmpl = $this->parse($tmpl);
         return $tmpl;
+    }
+
+    private function startsWith($haystack, $needle)
+    {
+        return strpos($haystack, $needle, 0) === 0;
     }
 }
