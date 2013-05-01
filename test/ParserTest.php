@@ -253,4 +253,33 @@ class ParserTest extends PHPUnit_Framework_TestCase
                                           'content' => 'default'));
         $this->assertTag($matcher, $ret);
     }
+    public function testFormSelectboxKeyValue()
+    {
+        $this->target->setFile('form_selectbox_key_value.html');
+        $args = new stdClass();
+        $args->obj = new stdClass();
+
+        $arr = array();
+        for($i = 0; $i < 3; $i++){
+            $obj = new stdClass();
+            $obj->name = "key$i";
+            $obj->value = "item$i";
+            $arr[] = $obj;
+        }
+        $args->list1arr = new \ArrayIterator($arr);
+        $args->list1 = 'key2';
+        $ret = $this->target->get($args);
+
+        $matcher = array('id' => 'list1',
+                         'children' => array('count' => 3));
+        $this->assertTag($matcher, $ret);
+        $matcher = array('id' => 'list1',
+                         'child' => array('attributes' =>
+                                          array('value' => 'key2',
+                                                'selected' => 'selected')));
+        $this->assertTag($matcher, $ret);
+        $matcher = array('id' => 'list1',
+                         'child' => array('content' => 'item1'));
+        $this->assertTag($matcher, $ret);
+    }
 }

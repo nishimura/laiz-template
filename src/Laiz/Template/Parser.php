@@ -152,7 +152,7 @@ class Parser extends Template
                 $len = strlen('laiz:else');
                 $parsed = '';
 
-            }else if (preg_match('/^laiz:form(="[[:alnum:]\._]+")?/', $sub, $m)){
+            }else if (preg_match('/^laiz:form(="[[:alnum:]\.:_]+")?/', $sub, $m)){
                 $form['parse'] = true;
                 $len = strlen($m[0]);
                 if (strtolower($tagName) === 'select')
@@ -233,13 +233,22 @@ class Parser extends Template
             if (!isset($form['laiz:form']))
                 break;
             $name = '$' . str_replace('.', '->', $form['laiz:form']);
+            $keyStr = '$__laizTemplateKey__';
+            $valStr = '$__laizTemplateValue__';
+            if (strpos($name, ':') !== false){
+                list($a, $key, $value) = explode(':', $name);
+                $name = $a;
+                $keyStr = "$valStr->$key";
+                $valStr .= "->$value";
+            }
+
             $val = $this->nameToValue($form['name']);
-            $php = "if(isset($name) && is_array($name)){ foreach($name as \$__laizTemplateKey__ => \$__laizTemplateValue__){"
+            $php = "if(isset($name) && (is_array($name) || $name instanceof \\Traversable)){ foreach($name as \$__laizTemplateKey__ => \$__laizTemplateValue__){"
                 . 'echo "<option value=\"";'
-                . 'echo $__laizTemplateKey__ . "\"";'
-                . 'if ($__laizTemplateKey__ == ' . $val . ')'
+                . "echo $keyStr . '\"';"
+                . "if ($keyStr == $val)"
                 . '  echo " selected=\"selected\"";'
-                . 'echo ">$__laizTemplateValue__</option>"; }}';
+                . "echo \">$valStr</option>\"; }}";
 
             $this->pushPhp($php, true);
             break;
