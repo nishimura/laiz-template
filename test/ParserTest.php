@@ -180,4 +180,77 @@ class ParserTest extends PHPUnit_Framework_TestCase
 
         $this->assertFalse(strpos($ret, 'checked') !== false);
     }
+
+    public function testFormRadio()
+    {
+        $this->target->setFile('form_radio.html');
+        $args = new stdClass();
+        $args->check = true;
+
+        $args->my = new stdClass();
+        $args->my->obj = new stdClass();
+        $args->my->obj->name = 'ON2';
+        $ret = $this->target->get($args);
+
+        $matcher = array('id' => 'radio1',
+                         'attributes' => array('checked' => 'checked'));
+        $this->assertTag($matcher, $ret);
+        $this->assertTrue(strpos($ret, 'checked') !== false);
+
+
+        $matcher = array('id' => 'radio2',
+                         'attributes' => array('checked' => 'checked'));
+        $this->assertTag($matcher, $ret);
+        $this->assertTrue(strpos($ret, 'checked') !== false);
+
+        $args->check = false;
+        $args->my->obj->name = 'dummy';
+        $ret = $this->target->get($args);
+
+        $this->assertFalse(strpos($ret, 'checked') !== false);
+    }
+
+    public function testFormSelectbox()
+    {
+        $this->target->setFile('form_selectbox.html');
+        $args = new stdClass();
+
+        $args->list1arr = array();
+        for($i = 0; $i < 3; $i++){
+            $args->list1arr[] = "item$i";
+        }
+        $args->list1 = '2';
+
+        $args->obj = new stdClass();
+        $args->obj->list = array();
+        for($i = 0; $i < 3; $i++){
+            $args->obj->list["key$i"] = "item$i";
+        }
+        $args->obj->name = 'key1';
+        $ret = $this->target->get($args);
+
+        $matcher = array('id' => 'list1',
+                         'children' => array('count' => 3));
+        $this->assertTag($matcher, $ret);
+        $matcher = array('id' => 'list1',
+                         'child' => array('attributes' =>
+                                          array('value' => '2',
+                                                'selected' => 'selected')));
+        $this->assertTag($matcher, $ret);
+
+
+        $matcher = array('id' => 'list2',
+                         'children' => array('count' => 4));
+        $this->assertTag($matcher, $ret);
+        $matcher = array('id' => 'list2',
+                         'child' => array('attributes' =>
+                                          array('value' => 'key1',
+                                                'selected' => 'selected')));
+        $this->assertTag($matcher, $ret);
+        $matcher = array('id' => 'list2',
+                         'child' => array('attributes' =>
+                                          array('value' => ''),
+                                          'content' => 'default'));
+        $this->assertTag($matcher, $ret);
+    }
 }

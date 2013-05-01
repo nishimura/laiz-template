@@ -73,11 +73,12 @@ class Parser extends Template
         return array($close . $ret . $close, $length + 2, $append);
     }
 
-    private function pushPhp($phpcode)
+    private function pushPhp($phpcode, $before = false)
     {
-        $this->tagStack[count($this->tagStack)-1]['php'] =
+        $name = $before ? 'before' : 'after';
+        $this->tagStack[count($this->tagStack)-1][$name] =
             '<?php ' . $phpcode . "\n?>\n"
-            . $this->tagStack[count($this->tagStack)-1]['php'];
+            . $this->tagStack[count($this->tagStack)-1][$name];
     }
 
     private function popTag($closeTag)
@@ -86,10 +87,7 @@ class Parser extends Template
         for ($i = $index; $i >= 0; $i--){
             $tag = array_pop($this->tagStack);
             if ($tag['tag'] === $closeTag){
-                if ($tag['php'])
-                    return $tag['php'];
-                else
-                    return '';
+                return array($tag['before'], $tag['after']);
             }
         }
         return '';
@@ -99,14 +97,15 @@ class Parser extends Template
         if (preg_match('|^</ *([[:alnum:]]+) *>|', $buf, $matches)){
             // close tag
             $tagName = $matches[1];
-            $append = $this->popTag($tagName);
-            return array($matches[0] . $append, strlen($matches[0]));
+            list($before, $after) = $this->popTag($tagName);
+            return array($before . $matches[0] . $after, strlen($matches[0]));
         }
         if (!preg_match('/^< *([[:alnum:]]+)/', $buf, $matches))
             return array($buf[0], 1);
 
         $tagName = $matches[1];
-        $this->tagStack[] = array('tag' => $tagName, 'php' => null);
+        $this->tagStack[] = array('tag' => $tagName,
+                                  'before' => '', 'after' => '');
 
         $length = strlen($buf);
         $ret = '';
@@ -116,6 +115,7 @@ class Parser extends Template
 
         $php = '';
         $form = array('parse' => false,
+                      'laiz:form' => null,
                       'type' => '',
                       'name' => '',
                       'value' => '');
@@ -152,9 +152,13 @@ class Parser extends Template
                 $len = strlen('laiz:else');
                 $parsed = '';
 
-            }else if ($this->startsWith($sub, 'laiz:form')){
+            }else if (preg_match('/^laiz:form(="[[:alnum:]\._]+")?/', $sub, $m)){
                 $form['parse'] = true;
-                $len = strlen('laiz:form');
+                $len = strlen($m[0]);
+                if (strtolower($tagName) === 'select')
+                    $form['type'] = 'select';
+                if (isset($m[1]))
+                    $form['laiz:form'] = trim($m[1], '="');
                 $parsed = '';
 
             }else if (preg_match('/^(type=|name=|value=)/', $sub, $m)){
@@ -180,7 +184,9 @@ class Parser extends Template
             }else if ($this->startsWith($sub, '/>')){
                 $ret .= '/>';
                 $i += 2;
-                $ret .= $this->popTag($tagName);
+
+                list($before, $after) = $this->popTag($tagName);
+                $ret = $before . $ret . $after;
                 break;
 
             }else if ($char === '>'){
@@ -202,6 +208,11 @@ class Parser extends Template
     }
     private function parseForm($tagStr, $form)
     {
+        if (!isset($form['value']))
+            return $tagStr;
+        if ($this->startsWith($form['value'], '<?php'))
+            return $tagStr;
+
         if (substr($tagStr, -2) === '/>'){
             $ret = substr($tagStr, 0, strlen($tagStr) - 2);
             $close = '/>';
@@ -213,13 +224,24 @@ class Parser extends Template
 
         switch ($form['type']){
         case 'checkbox':
-            if (!isset($form['value']))
-                break;
-            if ($this->startsWith($form['value'], '<?php'))
-                break;
-
+        case 'radio':
             $val = $this->nameToValue($form['name']);
             $value = "<?php if(isset($val) && ($val === true || $val == '$form[value]')) echo ' checked=\"checked\"';?>";
+            break;
+
+        case 'select':
+            if (!isset($form['laiz:form']))
+                break;
+            $name = '$' . str_replace('.', '->', $form['laiz:form']);
+            $val = $this->nameToValue($form['name']);
+            $php = "if(isset($name) && is_array($name)){ foreach($name as \$__laizTemplateKey__ => \$__laizTemplateValue__){"
+                . 'echo "<option value=\"";'
+                . 'echo $__laizTemplateKey__ . "\"";'
+                . 'if ($__laizTemplateKey__ == ' . $val . ')'
+                . '  echo " selected=\"selected\"";'
+                . 'echo ">$__laizTemplateValue__</option>"; }}';
+
+            $this->pushPhp($php, true);
             break;
 
         default:
