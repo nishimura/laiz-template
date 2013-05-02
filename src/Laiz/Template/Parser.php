@@ -90,7 +90,7 @@ class Parser extends Template
                 return array($tag['before'], $tag['after']);
             }
         }
-        return '';
+        return array('', '');
     }
     private function parseTag($buf)
     {
