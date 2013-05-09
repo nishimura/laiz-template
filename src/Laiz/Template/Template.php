@@ -16,10 +16,10 @@ class Template
         if ($templateDir)
             $this->templateDir = $templateDir;
         if ($cacheDir)
-            $this->cacheDir;
+            $this->cacheDir = $cacheDir;
 
         if (!is_writeable($this->cacheDir))
-            throw new \RuntimeException("$cacheDir directory is not writeable.");
+            throw new \RuntimeException("$this->cacheDir directory is not writeable.");
 
         $this->vars = new \StdClass();
     }
