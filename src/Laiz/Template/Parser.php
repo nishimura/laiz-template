@@ -128,9 +128,9 @@ class Parser extends Template
                 $ite = str_replace('.', '->', $m[1]);
                 if (isset($m[3])){
                     $v = ltrim($m[3], ':');
-                    $php .= "<?php foreach(\$$ite as \$$m[2]=>\$$v): ?>";
+                    $php .= "<?php foreach(\$$ite as \$$m[2]=>\$$v): ?>\n";
                 }else{
-                    $php .= "<?php foreach(\$$ite as \$$m[2]): ?>";
+                    $php .= "<?php foreach(\$$ite as \$$m[2]): ?>\n";
                 }
                 $len = strlen($m[0]);
                 $this->pushPhp('endforeach;');
@@ -143,7 +143,7 @@ class Parser extends Template
                     $this->pushPhp('endif;');
                 }
                 $v = str_replace('.', '->', $m[2]);
-                $php .= "<?php if (isset(\$$v) && \$$v): ?>";
+                $php .= "<?php if (isset(\$$v) && \$$v): ?>\n";
                 $len = strlen($m[0]);
                 $parsed = '';
 
@@ -170,7 +170,7 @@ class Parser extends Template
                     $this->parseAttr($tagName, $char, substr($buf, $i));
                 if ($append)
                     $ret = $append . $ret;
-                $form[trim($m[1], '=')] = trim($parsed, $char);
+                $form[trim($m[1], '=')] = htmlspecialchars_decode(trim($parsed, $char));
 
             }else if ($char === '"' || $char === "'"){
                 list($parsed, $len, $append) =
@@ -221,12 +221,13 @@ class Parser extends Template
             $close = '>';
         }
         $value = '';
+        $formValue = str_replace("'", "\\'", $form['value']);
 
         switch ($form['type']){
         case 'checkbox':
         case 'radio':
             $val = $this->nameToValue($form['name']);
-            $value = "<?php if(isset($val) && ($val === true || $val == '$form[value]')) echo ' checked=\"checked\"';?>";
+            $value = "<?php if(isset($val) && ((is_array($val) && in_array('$formValue', $val)) || ($val === true || $val == '$formValue'))) echo ' checked=\"checked\"';?>\n";
             break;
 
         case 'select':
@@ -258,8 +259,10 @@ class Parser extends Template
         }
         return $ret . $value . $close;
     }
+
     private function nameToValue($name)
     {
+        $name = str_replace('[]', '', $name);
         $name = str_replace('[', '->', $name);
         $name = str_replace(']', '', $name);
         return '$' . $name;
@@ -281,7 +284,7 @@ class Parser extends Template
             $ret = '<?php $__laizTemplateParser__ = new Laiz\Template\Parser();'
                 . '$__laizTemplateParser__->compile('
                 . "'$templateFile', '$cacheFile');"
-                . "include '$cacheFile'; ?>";
+                . "include '$cacheFile'; ?>\n";
             return array($ret, $len);
         }
 
@@ -309,7 +312,7 @@ class Parser extends Template
         }else {
             $val = 'htmlspecialchars($' . $name . ')';
         }
-        $ret = '<?php echo ' .  $val . '; ?>';
+        $ret = '<?php echo ' .  $val . "; ?>\n";
         return array($ret, $len);
     }
     protected function compileInternal($tmplFile, $cacheFile)
@@ -322,5 +325,11 @@ class Parser extends Template
     private function startsWith($haystack, $needle)
     {
         return strpos($haystack, $needle, 0) === 0;
+    }
+    private function endsWith($haystack, $needle){
+        $length = (strlen($haystack) - strlen($needle));
+        if($length < 0)
+            return false;
+        return strpos($haystack, $needle, $length) !== false;
     }
 }
