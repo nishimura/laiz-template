@@ -118,7 +118,8 @@ class Parser extends Template
                       'laiz:form' => null,
                       'type' => '',
                       'name' => '',
-                      'value' => '');
+                      'value' => '',
+                      'valueRaw' => '');
         for ($i = 0; $i < $length;){
             $char = $buf[$i];
 
@@ -171,6 +172,8 @@ class Parser extends Template
                 if ($append)
                     $ret = $append . $ret;
                 $form[trim($m[1], '=')] = htmlspecialchars_decode(trim($parsed, $char));
+                if ($m[1] === 'value=')
+                    $form['valueRaw'] = trim(substr($buf, $i, $len), '"');
 
             }else if ($char === '"' || $char === "'"){
                 list($parsed, $len, $append) =
@@ -210,8 +213,17 @@ class Parser extends Template
     {
         if (!isset($form['value']))
             return $tagStr;
-        if ($this->startsWith($form['value'], '<?php'))
-            return $tagStr;
+        if ($this->startsWith($form['value'], '<?php')){
+            if ($form['valueRaw'][0] === '{' &&
+                $form['valueRaw'][strlen($form['valueRaw']) - 1] === '}'){
+                $formValue = '$' . str_replace('.', '->', substr($form['valueRaw'], 1,
+                                                                 strlen($form['valueRaw']) - 2));
+            }else{
+                return $tagStr;
+            }
+        }else{
+            $formValue = "'" . str_replace("'", "\\'", $form['value']) . "'";
+        }
 
         if (substr($tagStr, -2) === '/>'){
             $ret = substr($tagStr, 0, strlen($tagStr) - 2);
@@ -221,13 +233,12 @@ class Parser extends Template
             $close = '>';
         }
         $value = '';
-        $formValue = str_replace("'", "\\'", $form['value']);
 
         switch ($form['type']){
         case 'checkbox':
         case 'radio':
             $val = $this->nameToValue($form['name']);
-            $value = "<?php if(isset($val) && ((is_array($val) && in_array('$formValue', $val)) || ($val === true || $val == '$formValue'))) echo ' checked=\"checked\"';?>\n";
+            $value = "<?php if(isset($val) && ((is_array($val) && in_array($formValue, $val)) || ($val === true || $val == '$formValue'))) echo ' checked=\"checked\"';?>\n";
             break;
 
         case 'select':
