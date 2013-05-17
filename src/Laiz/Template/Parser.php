@@ -238,7 +238,7 @@ class Parser extends Template
         case 'checkbox':
         case 'radio':
             $val = $this->nameToValue($form['name']);
-            $value = "<?php if(isset($val) && ((is_array($val) && in_array($formValue, $val)) || ($val === true || $val == '$formValue'))) echo ' checked=\"checked\"';?>\n";
+            $value = "<?php if(isset($val) && ((is_array($val) && in_array($formValue, $val)) || ($val === true || $val == $formValue))) echo ' checked=\"checked\"';?>\n";
             break;
 
         case 'select':
