@@ -288,7 +288,7 @@ class Parser extends Template
         $len = strlen($name) + 2;
 
         // special replacement
-        if (preg_match('|^include:([[:alnum:]/]+\.html)|', $name, $matches)){
+        if (preg_match('|^include:([[:alnum:]\./_]+\.html)|', $name, $matches)){
             $file = $matches[1];
             $templateFile = $this->templateDir . "/$file";
             $cacheFile = $this->cacheDir . "/$file";
