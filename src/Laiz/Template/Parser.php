@@ -6,8 +6,6 @@ require_once 'Template.php';
 
 class Parser extends Template
 {
-    private $tagOpened = false;
-    private $attrOpend = false;
     private $behaviors = array('b' => 'nl2br',
                                'n' => 'number_format',
                                'u' => 'urlencode');
@@ -16,6 +14,11 @@ class Parser extends Template
     public function __construct($templateDir = null, $cacheDir = null)
     {
         parent::__construct($templateDir, $cacheDir);
+    }
+
+    public function __clone()
+    {
+        $this->tagStack = array();
     }
 
     public function addBehavior($char, $callback, $isPlain = false)
@@ -292,7 +295,7 @@ class Parser extends Template
             $file = $matches[1];
             $templateFile = $this->templateDir . "/$file";
             $cacheFile = $this->cacheDir . "/$file";
-            $ret = '<?php $__laizTemplateParser__ = new Laiz\Template\Parser();'
+            $ret = '<?php $__laizTemplateParser__ = clone $this;'
                 . '$__laizTemplateParser__->compile('
                 . "'$templateFile', '$cacheFile');"
                 . "include '$cacheFile'; ?>\n";
