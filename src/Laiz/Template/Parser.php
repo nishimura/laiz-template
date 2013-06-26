@@ -101,12 +101,18 @@ class Parser extends Template
             // close tag
             $tagName = $matches[1];
             list($before, $after) = $this->popTag($tagName);
-            return array($before . $matches[0] . $after, strlen($matches[0]));
+            if ($tagName === 'laiz')
+                $content = '';
+            else
+                $content = $matches[0];
+            return array($before . $content . $after, strlen($matches[0]));
         }
         if (!preg_match('/^< *([[:alnum:]]+)/', $buf, $matches))
             return array($buf[0], 1);
 
         $tagName = $matches[1];
+        $emptyTag = $tagName === 'laiz';
+
         $this->tagStack[] = array('tag' => $tagName,
                                   'before' => '', 'after' => '');
 
@@ -123,6 +129,7 @@ class Parser extends Template
                       'name' => '',
                       'value' => '',
                       'valueRaw' => '');
+
         for ($i = 0; $i < $length;){
             $char = $buf[$i];
 
@@ -188,7 +195,8 @@ class Parser extends Template
                 list($parsed, $len) = $this->parseVal(substr($buf, $i));
 
             }else if ($this->startsWith($sub, '/>')){
-                $ret .= '/>';
+                if (!$emptyTag)
+                    $ret .= '/>';
                 $i += 2;
 
                 list($before, $after) = $this->popTag($tagName);
@@ -196,11 +204,15 @@ class Parser extends Template
                 break;
 
             }else if ($char === '>'){
-                $ret .= $char;
+                if (!$emptyTag)
+                    $ret .= $char;
                 $i++;
                 break;
             }else{
-                $parsed = $char;
+                if ($emptyTag)
+                    $parsed = '';
+                else
+                    $parsed = $char;
                 $len = 1;
             }
             $ret .= $parsed;
